@@ -94,7 +94,7 @@
           <li
             [attr.id]="configuration.id + '-resultItem-' + i"
             [attr.role]="useListboxRoles() ? 'option' : 'listitem'"
-            [attr.aria-selected]="useListboxRoles() ? (result['highlighted'] ? 'true' : 'false') : null"
+            [attr.aria-selected]="useListboxRoles() ? (isOptionSelected(result) ? 'true' : 'false') : null"
             tabindex="-1"
             [ngClass]="{
               'sds-autocomplete__group': configuration.isGroupingEnabled,

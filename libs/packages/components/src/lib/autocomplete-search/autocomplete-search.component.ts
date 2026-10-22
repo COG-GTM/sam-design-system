@@ -697,6 +697,19 @@ export class SDSAutocompleteSearchComponent implements ControlValueAccessor {
     return !this.configuration.isGroupingEnabled && !this.configuration.useCheckBoxes;
   }
 
+  /**
+   * aria-selected for a flat option. In single selection the highlighted option is
+   * the selected one (ARIA combobox pattern); in multiple selection it reflects
+   * whether the option is in the model.
+   * @param result
+   */
+  isOptionSelected(result: object): boolean {
+    if (this.configuration.selectionMode === SelectionMode.MULTIPLE) {
+      return this.checkItemSelected(result);
+    }
+    return !!result[this.HighlightedPropertyName];
+  }
+
   writeValue(obj: any): void {
     if (obj instanceof SDSSelectedItemModel) {
       this.model = obj as SDSSelectedItemModel;

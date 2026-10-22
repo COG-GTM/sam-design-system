@@ -1154,6 +1154,27 @@ describe('SamAutocompleteComponent', () => {
       expect(liveRegion.nativeElement.textContent.trim()).toBe('');
     }));
 
+    it('reports aria-selected from the model in multiple selection while the highlight moves', fakeAsync(() => {
+      component.configuration.selectionMode = SelectionMode.MULTIPLE;
+      component.model = new SDSSelectedItemModel();
+      component.inputFocusHandler();
+      tick();
+      fixture.detectChanges();
+      component.selectItem(component.results[0]);
+      component.inputFocusHandler();
+      tick();
+      fixture.detectChanges();
+      component.onKeydown({ key: 'Down', target: { value: '' }, preventDefault: vi.fn() });
+      tick();
+      fixture.detectChanges();
+      const options = fixture.debugElement.queryAll(By.css('.sds-autocomplete li[role="option"]'));
+      expect(options[0].attributes['aria-selected']).toBe('true');
+      expect(options[1].attributes['aria-selected']).toBe('false');
+      expect(component.results[1]['highlighted']).toBe(true);
+      const input = fixture.debugElement.query(By.css('input'));
+      expect(input.attributes['aria-activedescendant']).toBe('autoId-resultItem-1');
+    }));
+
     it('does not reference a missing option when nothing is highlighted', fakeAsync(() => {
       component.configuration.isFreeTextEnabled = true;
       component.inputFocusHandler();
