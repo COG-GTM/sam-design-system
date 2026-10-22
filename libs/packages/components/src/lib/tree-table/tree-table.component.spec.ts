@@ -358,6 +358,30 @@ describe('SdsTreeTableComponent', () => {
       expect(viewAllBtn.nativeElement.textContent.replace(/\s+/g, ' ').trim()).toBe('View All ( 6 )');
     }));
 
+    it('should emit viewAll when a row without totalChildren has more children than the limit', () => {
+      const row: any = {
+        id: 'local-only',
+        children: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+      };
+      const currentTr = document.createElement('tr');
+      const tableTr = document.createElement('tr');
+
+      treeTableComponent.viewAllClicked(row, currentTr, tableTr);
+
+      expect(row.viewAllChildren).toBe(true);
+      expect(tableTr.getAttribute('tabindex')).toBe('0');
+      expect(host.onViewAll).toHaveBeenCalledWith(row);
+    });
+
+    it('should not emit viewAll when a row without totalChildren fits within the limit', () => {
+      const row: any = { id: 'local-only', children: [{ id: 'a' }, { id: 'b' }] };
+
+      treeTableComponent.viewAllClicked(row, document.createElement('tr'), document.createElement('tr'));
+
+      expect(row.viewAllChildren).toBe(true);
+      expect(host.onViewAll).not.toHaveBeenCalled();
+    });
+
     it('should return early from viewAllClicked when row has no children and no totalChildren', () => {
       const dummyRow: any = { id: 'dummy' };
       const currentTr = document.createElement('tr');

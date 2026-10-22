@@ -3,7 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { Component, ElementRef, ViewChild, ViewChildren, QueryList, Type, Provider, Input } from '@angular/core';
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { ESCAPE, DOWN_ARROW, HOME, END } from '@angular/cdk/keycodes';
+import { ESCAPE, DOWN_ARROW, HOME, END, TAB } from '@angular/cdk/keycodes';
 import { FocusMonitor } from '@angular/cdk/a11y';
 import { SdsMenuModule } from './menu.module';
 import { SdsMenuComponent, MenuPositionX, MenuPositionY } from './menu.component';
@@ -77,6 +77,20 @@ describe('SdsMenu', () => {
     tick(500);
 
     expect(overlayContainerElement.textContent).toBe('');
+  }));
+
+  it('should emit closed with "tab" when the user tabs out of the menu', fakeAsync(() => {
+    const fixture = createComponent(SimpleMenuComponent, [], [FakeIconComponent]);
+    fixture.detectChanges();
+    fixture.componentInstance.trigger.openMenu();
+    fixture.detectChanges();
+
+    const panel = overlayContainerElement.querySelector('.sds-overlay') as HTMLElement;
+    dispatchKeyboardEvent(panel, 'keydown', TAB);
+    fixture.detectChanges();
+    tick(500);
+
+    expect(fixture.componentInstance.closeCallback).toHaveBeenCalledWith('tab');
   }));
 
   it('should restore focus to the trigger when the menu was opened by keyboard', fakeAsync(() => {

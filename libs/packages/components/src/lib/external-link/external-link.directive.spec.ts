@@ -14,12 +14,14 @@ import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/t
     <a id="test5" [hideIcon]="true" href="google.com" aria-label="test aria label with no keywords">Google </a>
     <a id="test6" [hideIcon]="true" href="google.com">Google <span>test element</span></a>
     <a id="test7" href="mailto:google.com">Email Google</a>
+    <a id="test8" [hideIcon]="hideIcon" href="google.com">Toggle icon</a>
   `,
   standalone: false,
 })
 class TestComponent {
   constructor() {}
   public name = location.hostname;
+  public hideIcon = false;
 }
 
 describe('Sam External Link Directive', () => {
@@ -49,12 +51,29 @@ describe('Sam External Link Directive', () => {
 
   it('should create one icon', () => {
     const icons = findIcons();
-    expect(icons.length).toEqual(1);
+    expect(icons.length).toEqual(2);
+  });
+
+  it('should remove the external icon when hideIcon becomes true after it was rendered', () => {
+    const link: HTMLAnchorElement = fixture.debugElement.query(By.css('#test8')).nativeElement;
+    expect(link.classList).toContain('usa-link--external');
+    expect(link.classList).toContain('display-inline-block');
+
+    component.hideIcon = true;
+    fixture.detectChanges();
+    expect(link.classList).not.toContain('usa-link--external');
+    expect(link.classList).not.toContain('display-inline-block');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener');
+
+    component.hideIcon = false;
+    fixture.detectChanges();
+    expect(link.classList).toContain('usa-link--external');
   });
 
   it('should not create an icon', () => {
     const icons = findIcons();
-    expect(icons.length).toEqual(1);
+    expect(icons.length).toEqual(2);
   });
 
   it('Should add aria label attribute to external links using inner text if one does not exist', () => {

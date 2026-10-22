@@ -1,6 +1,6 @@
 import { NgZone } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import {
   toInteger,
   toString,
@@ -172,6 +172,24 @@ describe('general utilities (util.ts)', () => {
         });
 
       expect(spy).toHaveBeenCalled();
+    });
+
+    it('should forward errors and completion through the zone', () => {
+      TestBed.configureTestingModule({});
+      const zone = TestBed.inject(NgZone);
+      const spy = vi.spyOn(zone, 'run');
+      const error = new Error('boom');
+      const errorHandler = vi.fn();
+      const completeHandler = vi.fn();
+
+      throwError(() => error)
+        .pipe(runInZone(zone))
+        .subscribe({ error: errorHandler });
+      expect(errorHandler).toHaveBeenCalledWith(error);
+
+      of('done').pipe(runInZone(zone)).subscribe({ complete: completeHandler });
+      expect(completeHandler).toHaveBeenCalledTimes(1);
+      expect(spy.mock.calls.length).toBeGreaterThanOrEqual(3);
     });
   });
 
