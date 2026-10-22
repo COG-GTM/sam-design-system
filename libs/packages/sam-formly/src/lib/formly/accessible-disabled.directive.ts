@@ -138,9 +138,17 @@ export class SdsAccessibleDisabledDirective implements AfterViewChecked {
     }
   }
 
+  /**
+   * `readonly` inputs still need arrow/Home/End keys to move the caret, so only Enter
+   * (implicit form submit) is cancelled for them; value-changing keys are cancelled for
+   * types that ignore `readonly`.
+   */
   @HostListener('keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
-    if (this.applied && VALUE_CHANGING_KEYS.includes(event.key)) {
+    if (!this.applied) {
+      return;
+    }
+    if (event.key === 'Enter' || (!this.supportsReadonly && VALUE_CHANGING_KEYS.includes(event.key))) {
       event.preventDefault();
     }
   }

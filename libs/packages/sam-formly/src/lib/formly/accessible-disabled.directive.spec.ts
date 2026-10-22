@@ -161,6 +161,10 @@ describe('SdsAccessibleDisabledDirective', () => {
 
       const tab = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true });
       expect(input.dispatchEvent(tab)).toBe(true);
+      for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) {
+        const caretMove = new KeyboardEvent('keydown', { key, cancelable: true });
+        expect(input.dispatchEvent(caretMove), key).toBe(true);
+      }
 
       expect(fixture.componentInstance.fields[0].formControl.value).toBe('Acme');
     });
