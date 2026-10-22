@@ -59,6 +59,10 @@ describe('SearchComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should be dropdown', () => {
     component.inputEl.nativeElement.value = 'test';
     component.searchSettings.dropdown.options = [
