@@ -6,6 +6,7 @@ import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule, FormlyForm } from '@ngx-formly/core';
 import { FormlySelectModule } from '@ngx-formly/core/select';
 import { FormlyFieldInputComponent } from './input';
+import { SdsAccessibleDisabledDirective } from '../accessible-disabled.directive';
 
 const createTestComponent = (html: string) =>
   createGenericTestComponent(html, TestComponent) as ComponentFixture<TestComponent>;
@@ -22,7 +23,7 @@ let testComponentInputs;
 describe('Formly Field input Component', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TestComponent, FormlyFieldInputComponent],
+      declarations: [TestComponent, FormlyFieldInputComponent, SdsAccessibleDisabledDirective],
       imports: [
         NoopAnimationsModule,
         ReactiveFormsModule,

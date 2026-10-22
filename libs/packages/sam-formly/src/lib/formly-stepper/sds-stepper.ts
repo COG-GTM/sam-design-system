@@ -21,6 +21,7 @@ import { AbstractControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
 import * as _ from 'lodash-es';
+import { SDS_ACCESSIBLE_DISABLED } from '../formly/accessible-disabled.directive';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -44,6 +45,7 @@ let nextId = 0;
   exportAs: `sdsStep`,
   templateUrl: `./sds-step.component.html`,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [{ provide: SDS_ACCESSIBLE_DISABLED, useValue: true }],
   standalone: false,
 })
 export class SdsStepComponent {

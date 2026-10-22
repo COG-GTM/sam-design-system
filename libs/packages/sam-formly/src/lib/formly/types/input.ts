@@ -18,6 +18,7 @@ import { FieldType, FieldTypeConfig } from '@ngx-formly/core';
           'usa-input--error': showError,
         }"
         [formlyAttributes]="field"
+        [sdsAccessibleDisabled]="field"
         [type]="props.inputType ? props.inputType : 'text'"
         [formControl]="formControl"
         [attr.aria-describedby]="props.description ? id + '-description' : undefined"

@@ -35,6 +35,26 @@ export class FormlyStepperBasicComponent {
           showError: false,
         },
       },
+      {
+        type: 'input',
+        key: 'uei',
+        defaultValue: 'ABC123DEF456',
+        templateOptions: {
+          label: 'Unique Entity ID',
+          description: 'Assigned by SAM.gov and cannot be edited here.',
+          disabled: true,
+        },
+      },
+      {
+        type: 'checkbox',
+        key: 'previouslyRegistered',
+        defaultValue: true,
+        templateOptions: {
+          label: 'Entity has been registered before',
+          disabled: true,
+          hideOptional: true,
+        },
+      },
     ],
     templateOptions: {
       completedValue: 75,

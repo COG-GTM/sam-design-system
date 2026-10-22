@@ -10,6 +10,7 @@ export * from './formly-filters/advanced-filters/sds-advanced-filters.service';
 export * from './formly/sds-formly-options';
 export * from './formly/formly.config';
 export * from './formly/sds-formly';
+export * from './formly/accessible-disabled.directive';
 export * from './formly-reset/formly-reset.component';
 export * from './formly-filters/sds-filters.component';
 export * from './formly-filters/advanced-filters/advanced-filters.component';

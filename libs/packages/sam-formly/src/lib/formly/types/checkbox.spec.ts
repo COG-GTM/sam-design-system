@@ -7,6 +7,7 @@ import { UntypedFormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule, FormlyForm } from '@ngx-formly/core';
 import { FormlySelectModule } from '@ngx-formly/core/select';
 import { FormlyFieldCheckboxComponent } from './checkbox';
+import { SdsAccessibleDisabledDirective } from '../accessible-disabled.directive';
 import { of as observableOf } from 'rxjs';
 
 const createTestComponent = (html: string) =>
@@ -24,7 +25,7 @@ let testComponentInputs;
 describe('Formly Field checkbox Component', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TestComponent, FormlyFieldCheckboxComponent],
+      declarations: [TestComponent, FormlyFieldCheckboxComponent, SdsAccessibleDisabledDirective],
       imports: [
         NoopAnimationsModule,
         ReactiveFormsModule,

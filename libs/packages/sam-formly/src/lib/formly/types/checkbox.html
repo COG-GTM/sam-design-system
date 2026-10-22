@@ -25,6 +25,7 @@
       [indeterminate]="props.indeterminate && formControl.value === null"
       [formControl]="formControl"
       [formlyAttributes]="field"
+      [sdsAccessibleDisabled]="field"
       [attr.aria-describedby]="props.description ? id + '-description' : undefined"
     />
     <label class="usa-checkbox__label" [for]="id">

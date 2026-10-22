@@ -24,6 +24,7 @@ import {
 import { FIELD_TYPE_COMPONENTS, FORMLY_CONFIG } from './formly.config';
 import { maxDateValidator, minDateValidator, dateRangeValidator } from './formly.validators';
 import { AnimationWrapperComponent } from './wrappers/form-field.animation';
+import { SdsAccessibleDisabledDirective } from './accessible-disabled.directive';
 import { SdsReadonlyModule } from './readonly/readonly.module';
 import { MatExpansionModule } from '@angular/material/expansion';
 import {
@@ -153,7 +154,7 @@ export const DATE_FORMAT: MatDateFormats = {
 };
 
 @NgModule({
-  declarations: [FIELD_TYPE_COMPONENTS, AnimationWrapperComponent],
+  declarations: [FIELD_TYPE_COMPONENTS, AnimationWrapperComponent, SdsAccessibleDisabledDirective],
   imports: [
     CommonModule,
     UsaAccordionModule,
@@ -235,6 +236,7 @@ export const DATE_FORMAT: MatDateFormats = {
       extensions: [{ name: 'animation', extension: { onPopulate: animationExtension } }],
     }),
   ],
+  exports: [SdsAccessibleDisabledDirective],
   providers: [{ provide: MAT_DATE_FORMATS, useValue: DATE_FORMAT }],
 })
 export class SdsFormlyModule {
