@@ -1,23 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { SDSAutocompletelConfiguration, SDSSelectedItemModel, SelectionMode } from '@gsa-sam/components';
-import { SampleAutocompleteData } from '../services/autocomplete-sample.data';
+import { AutocompleteCountryDataService } from '../services/autocomplete-country.service';
 import { AutocompleteSampleDataService } from '../services/autocomplete-sample.service';
 
 @Component({
   standalone: false,
   templateUrl: './autocomplete-selection-mode.component.html',
   selector: `sds-autocomplete-selection-mode-demo`,
-  providers: [AutocompleteSampleDataService],
+  providers: [AutocompleteSampleDataService, AutocompleteCountryDataService],
 })
 export class AutocompleteSelectionMode implements OnInit {
-  private data = SampleAutocompleteData;
   public settings = new SDSAutocompletelConfiguration();
   public settings3 = new SDSAutocompletelConfiguration();
 
   public model = new SDSSelectedItemModel();
   public model3 = new SDSSelectedItemModel();
 
-  constructor(public service: AutocompleteSampleDataService) {
+  constructor(
+    public countryService: AutocompleteCountryDataService,
+    public service: AutocompleteSampleDataService,
+  ) {
     this.setup();
   }
 
@@ -31,10 +33,9 @@ export class AutocompleteSelectionMode implements OnInit {
     this.settings.id = 'autocompleteBasic';
     this.settings.primaryKeyField = 'id';
     this.settings.primaryTextField = 'name';
-    this.settings.secondaryTextField = 'subtext';
-    this.settings.labelText = 'Autocomplete 1';
+    this.settings.labelText = 'Country';
     this.settings.selectionMode = SelectionMode.SINGLE;
-    this.settings.autocompletePlaceHolderText = 'eg: Level 1';
+    this.settings.autocompletePlaceHolderText = 'eg: Japan';
 
     this.settings3.primaryKeyField = 'id';
     this.settings3.id = 'autocompleteBasic3';

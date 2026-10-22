@@ -103,4 +103,12 @@ export class SDSAutocompleteSearchConfiguration {
   public hideCloseIcon: boolean = false;
 
   public useCheckBoxes: boolean = false;
+
+  /**
+   * Orders each page of results returned by the service so that options whose
+   * primary text begins with the typed text come first, followed by options
+   * that contain it elsewhere (each group alphabetical, case-insensitive).
+   * Set to false to keep the exact order returned by the service.
+   */
+  public rankResultsByMatch: boolean = true;
 }

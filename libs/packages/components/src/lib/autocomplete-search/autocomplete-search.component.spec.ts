@@ -23,6 +23,7 @@ import { By } from '@angular/platform-browser';
 import { AutoCompleteSampleDataService } from './autocomplete-seach-test-service';
 
 import { OverlayModule } from '@angular/cdk/overlay';
+import { of } from 'rxjs';
 
 describe('SamAutocompleteComponent', () => {
   let component: SDSAutocompleteSearchComponent;
@@ -1028,4 +1029,152 @@ describe('SamAutocompleteComponent', () => {
     expect(querySpy).toHaveBeenCalledWith('.sds-autocomplete__checkbox--highlighted');
     expect(dom.scrollTop).toBe(80);
   }));
+
+  describe('result ranking and option announcement', () => {
+    const countries = [
+      { id: 'AZ', name: 'Azerbaijan' },
+      { id: 'DJ', name: 'Djibouti' },
+      { id: 'FJ', name: 'Fiji' },
+      { id: 'JM', name: 'Jamaica' },
+      { id: 'JP', name: 'Japan' },
+      { id: 'JE', name: 'Jersey' },
+      { id: 'JO', name: 'Jordan' },
+      { id: 'SJ', name: 'Svalbard and Jan Mayen' },
+      { id: 'TJ', name: 'Tajikistan' },
+    ];
+
+    class CountryService {
+      getDataByText(currentItems: number, searchValue?: string) {
+        const term = (searchValue || '').toLowerCase();
+        const items = countries.filter((country) => country.name.toLowerCase().includes(term));
+        return of({ items: items.map((item) => ({ ...item })), totalItems: items.length });
+      }
+    }
+
+    const names = (items: object[]) => items.map((item) => item['name']);
+
+    beforeEach(() => {
+      component.service = new CountryService();
+      component.configuration.primaryKeyField = 'id';
+      component.configuration.primaryTextField = 'name';
+      component.configuration.secondaryTextField = undefined;
+      component.configuration.labelText = 'Country';
+    });
+
+    it('ranks options that begin with the search text before options that only contain it', () => {
+      expect(names(component.rankResults(countries, 'J'))).toEqual([
+        'Jamaica',
+        'Japan',
+        'Jersey',
+        'Jordan',
+        'Azerbaijan',
+        'Djibouti',
+        'Fiji',
+        'Svalbard and Jan Mayen',
+        'Tajikistan',
+      ]);
+    });
+
+    it('ranks case-insensitively and sorts each group alphabetically', () => {
+      const shuffled = [countries[4], countries[8], countries[3], countries[0], countries[6]];
+      expect(names(component.rankResults(shuffled, 'j'))).toEqual([
+        'Jamaica',
+        'Japan',
+        'Jordan',
+        'Azerbaijan',
+        'Tajikistan',
+      ]);
+    });
+
+    it('keeps the service order for items matched on other fields and places them last', () => {
+      const items = [
+        { id: '1', name: 'Zambia', subtext: 'J-1' },
+        { id: '2', name: 'Japan', subtext: 'x' },
+        { id: '3', name: 'Angola', subtext: 'J-2' },
+        { id: '4', name: 'Fiji', subtext: 'x' },
+      ];
+      expect(names(component.rankResults(items, 'J'))).toEqual(['Japan', 'Fiji', 'Zambia', 'Angola']);
+    });
+
+    it('leaves the service order untouched when ranking is disabled, grouping is enabled, or there is no search text', () => {
+      const input = [countries[0], countries[4], countries[3]];
+      expect(names(component.rankResults(input, ''))).toEqual(['Azerbaijan', 'Japan', 'Jamaica']);
+      component.configuration.isGroupingEnabled = true;
+      expect(names(component.rankResults(input, 'J'))).toEqual(['Azerbaijan', 'Japan', 'Jamaica']);
+      component.configuration.isGroupingEnabled = false;
+      component.configuration.rankResultsByMatch = false;
+      expect(names(component.rankResults(input, 'J'))).toEqual(['Azerbaijan', 'Japan', 'Jamaica']);
+    });
+
+    it('applies the ranking to results returned by the service and highlights the first ranked option', fakeAsync(() => {
+      const event = { preventDefault: () => {}, target: component.input.nativeElement };
+      component.input.nativeElement.value = 'J';
+      component.input.nativeElement.focus();
+      component.textChange(event);
+      tick();
+      fixture.detectChanges();
+      expect(names(component.results).slice(0, 4)).toEqual(['Jamaica', 'Japan', 'Jersey', 'Jordan']);
+      expect(component.results[0]['highlighted']).toBe(true);
+      const options = fixture.debugElement.queryAll(By.css('.sds-autocomplete li[role="option"]'));
+      expect(options[0].nativeElement.textContent.trim()).toBe('Jamaica');
+    }));
+
+    it('exposes the open dropdown as a listbox with the highlighted option selected and referenced by aria-activedescendant', fakeAsync(() => {
+      component.inputFocusHandler();
+      tick();
+      fixture.detectChanges();
+      const list = fixture.debugElement.query(By.css('.sds-autocomplete'));
+      expect(list.attributes['role']).toBe('listbox');
+      expect(list.attributes['aria-label']).toBe('Country');
+      const options = fixture.debugElement.queryAll(By.css('.sds-autocomplete li[role="option"]'));
+      expect(options.length).toBe(countries.length);
+      expect(options[0].attributes['id']).toBe('autoId-resultItem-0');
+      expect(options[0].attributes['aria-selected']).toBe('true');
+      expect(options[1].attributes['aria-selected']).toBe('false');
+      const input = fixture.debugElement.query(By.css('input'));
+      expect(input.attributes['aria-activedescendant']).toBe('autoId-resultItem-0');
+    }));
+
+    it('announces the highlighted option on open through a live region that exists before the dropdown opens', fakeAsync(() => {
+      const liveRegion = fixture.debugElement.query(By.css('[aria-live]'));
+      expect(liveRegion).toBeTruthy();
+      expect(liveRegion.nativeElement.textContent.trim()).toBe('');
+
+      component.inputFocusHandler();
+      tick();
+      fixture.detectChanges();
+      const announced = liveRegion.nativeElement.textContent;
+      expect(announced).toContain(countries.length + ' ');
+      expect(announced).toContain('results available');
+      expect(announced).toContain('Azerbaijan');
+      expect(announced.indexOf('results available')).toBeLessThan(announced.indexOf('Azerbaijan'));
+
+      component.checkForFocus({});
+      fixture.detectChanges();
+      expect(liveRegion.nativeElement.textContent.trim()).toBe('');
+    }));
+
+    it('does not reference a missing option when nothing is highlighted', fakeAsync(() => {
+      component.configuration.isFreeTextEnabled = true;
+      component.inputFocusHandler();
+      tick();
+      fixture.detectChanges();
+      expect(component.highlightedIndex).toBe(-1);
+      const input = fixture.debugElement.query(By.css('input'));
+      expect(input.attributes['aria-activedescendant']).toBeUndefined();
+    }));
+
+    it('keeps list semantics for grouped results', fakeAsync(() => {
+      component.configuration.isGroupingEnabled = true;
+      component.inputFocusHandler();
+      tick();
+      fixture.detectChanges();
+      const list = fixture.debugElement.query(By.css('.sds-autocomplete'));
+      expect(list.attributes['role']).toBe('list');
+      expect(list.attributes['aria-label']).toBeUndefined();
+      const items = fixture.debugElement.queryAll(By.css('.sds-autocomplete > li'));
+      expect(items[0].attributes['role']).toBe('listitem');
+      expect(items[0].attributes['aria-selected']).toBeUndefined();
+    }));
+  });
 });

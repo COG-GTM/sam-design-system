@@ -22,11 +22,14 @@
         aria-autocomplete="list"
         [(ngModel)]="inputValue"
         [attr.placeholder]="configuration.autocompletePlaceHolderText"
-        [attr.aria-activedescendant]="showResults ? configuration.id + '-resultItem-' + highlightedIndex : ''"
+        [attr.aria-activedescendant]="
+          showResults && highlightedIndex >= 0 ? configuration.id + '-resultItem-' + highlightedIndex : null
+        "
         [attr.aria-controls]="showResults ? configuration.id + '-list' : ''"
         autocomplete="off"
       />
     </div>
+    <div class="usa-sr-only" aria-live="assertive" aria-atomic="true">{{ showResults ? srOnlyText : '' }}</div>
     <ng-template
       cdkConnectedOverlay
       [cdkConnectedOverlayOrigin]="trigger"
@@ -37,7 +40,14 @@
       <ul
         #resultsList
         [attr.id]="configuration.id + '-list'"
-        role="list"
+        [attr.role]="useListboxRoles() ? 'listbox' : 'list'"
+        [attr.aria-label]="
+          useListboxRoles()
+            ? configuration.ariaLabelText
+              ? configuration.ariaLabelText
+              : configuration.labelText
+            : null
+        "
         class="usa-list usa-list--unstyled sds-autocomplete"
         (scroll)="onScroll()"
       >
@@ -83,7 +93,9 @@
         <ng-container *ngIf="results && results.length && !configuration.useCheckBoxes">
           <li
             [attr.id]="configuration.id + '-resultItem-' + i"
-            role="listitem"
+            [attr.role]="useListboxRoles() ? 'option' : 'listitem'"
+            [attr.aria-selected]="useListboxRoles() ? (result['highlighted'] ? 'true' : 'false') : null"
+            tabindex="-1"
             [ngClass]="{
               'sds-autocomplete__group': configuration.isGroupingEnabled,
               'sds-autocomplete__item': !configuration.isGroupingEnabled,
@@ -202,21 +214,20 @@
           </li>
         </ng-container>
         <ng-container *ngIf="!results || results.length == 0">
-          <li class="emptyResults margin-1">No results found</li>
+          <li class="emptyResults margin-1" [attr.role]="useListboxRoles() ? 'presentation' : null">
+            No results found
+          </li>
         </ng-container>
         <ng-container *ngIf="showLoad">
-          <li class="autoLoading">
+          <li class="autoLoading" [attr.role]="useListboxRoles() ? 'presentation' : null" aria-hidden="true">
             <div class="lightToGrayBackgroundGradiate"></div>
             <div class="grayToLightBackgroundGradiate"></div>
           </li>
-          <li class="autoLoading">
+          <li class="autoLoading" [attr.role]="useListboxRoles() ? 'presentation' : null" aria-hidden="true">
             <div class="lightToGrayBackgroundGradiate"></div>
             <div class="grayToLightBackgroundGradiate"></div>
           </li>
         </ng-container>
-      </ul>
-      <ul class="usa-sr-only" aria-live="assertive">
-        <li>{{ srOnlyText }}</li>
       </ul>
     </ng-template>
 

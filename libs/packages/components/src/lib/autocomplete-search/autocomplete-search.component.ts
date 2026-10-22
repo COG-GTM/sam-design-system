@@ -533,7 +533,7 @@ export class SDSAutocompleteSearchComponent implements ControlValueAccessor {
         this.timeoutNumber = window.setTimeout(() => {
           this.showLoad = true;
           this.service.getDataByText(0, searchString).subscribe((result) => {
-            this.results = result.items;
+            this.results = this.rankResults(result.items, searchString);
             this.showLoad = false;
             this.maxResults = result.totalItems;
 
@@ -547,7 +547,11 @@ export class SDSAutocompleteSearchComponent implements ControlValueAccessor {
               this.setHighlightedItem(this.results[this.highlightedIndex]);
             }
             this.showResults = true;
-            this.addScreenReaderMessage(this.maxResults + ' ' + this.resultsAvailableMessage);
+            let message = this.maxResults + ' ' + this.resultsAvailableMessage;
+            if (this.highlightedItem && this.highlightedIndex >= 0) {
+              message += ' ' + this.getItemMessage(this.highlightedItem);
+            }
+            this.addScreenReaderMessage(message);
             this._changeDetectorRef.markForCheck();
           });
         }, this.configuration.debounceTime);
@@ -582,8 +586,9 @@ export class SDSAutocompleteSearchComponent implements ControlValueAccessor {
   private getAdditionalResults() {
     this.showLoad = true;
     this.service.getDataByText(this.results.length, this.searchString).subscribe((result) => {
-      for (let i = 0; i < result.items.length; i++) {
-        this.addResult(result.items[i]);
+      const items = this.rankResults(result.items, this.searchString);
+      for (let i = 0; i < items.length; i++) {
+        this.addResult(items[i]);
       }
       this.showLoad = false;
       this.maxResults = result.totalItems;
@@ -612,10 +617,7 @@ export class SDSAutocompleteSearchComponent implements ControlValueAccessor {
       if (item) {
         this.highlightedItem = item;
         this.highlightedItem[this.HighlightedPropertyName] = true;
-        message = item[this.configuration.primaryTextField];
-        if (this.configuration.secondaryTextField && item[this.configuration.secondaryTextField]) {
-          message += ': ' + item[this.configuration.secondaryTextField];
-        }
+        message = this.getItemMessage(item);
       } else {
         this.highlightedItem = undefined;
         message = 'No item selected';
@@ -625,11 +627,74 @@ export class SDSAutocompleteSearchComponent implements ControlValueAccessor {
   }
 
   /**
+   * Builds the text announced for an item (primary text, then secondary text)
+   * @param item
+   */
+  private getItemMessage(item: object): string {
+    let message = this.getObjectValue(item, this.configuration.primaryTextField);
+    const secondary = this.configuration.secondaryTextField
+      ? this.getObjectValue(item, this.configuration.secondaryTextField)
+      : '';
+    if (secondary) {
+      message += ': ' + secondary;
+    }
+    return message;
+  }
+
+  /**
+   * Orders a page of results so that items whose primary text starts with the
+   * search text come first, then items that contain it elsewhere. Both groups
+   * are sorted alphabetically (case-insensitive); items matched on other
+   * fields keep the order returned by the service and follow the two groups.
+   * Grouped results are left untouched because their nesting carries meaning.
+   * @param items
+   * @param searchString
+   */
+  public rankResults(items: object[], searchString: string): object[] {
+    const term = (searchString || '').trim().toLowerCase();
+    if (
+      !items ||
+      !term ||
+      this.configuration.rankResultsByMatch === false ||
+      this.configuration.isGroupingEnabled ||
+      !this.configuration.primaryTextField
+    ) {
+      return items;
+    }
+    const ranked = items.map((item, index) => {
+      const label = this.getObjectValue(item, this.configuration.primaryTextField).toLowerCase();
+      const tier = label.startsWith(term) ? 0 : label.includes(term) ? 1 : 2;
+      return { item, index, label, tier };
+    });
+    ranked.sort((a, b) => {
+      if (a.tier !== b.tier) {
+        return a.tier - b.tier;
+      }
+      if (a.tier < 2) {
+        const byLabel = a.label.localeCompare(b.label);
+        if (byLabel !== 0) {
+          return byLabel;
+        }
+      }
+      return a.index - b.index;
+    });
+    return ranked.map((entry) => entry.item);
+  }
+
+  /**
    * Adds message to be read by screen reader
    * @param message
    */
   private addScreenReaderMessage(message: string) {
     this.srOnlyText = message;
+  }
+
+  /**
+   * Flat (non-grouped, non-checkbox) results are exposed as a listbox of
+   * options so the highlighted option is announced through aria-activedescendant
+   */
+  useListboxRoles(): boolean {
+    return !this.configuration.isGroupingEnabled && !this.configuration.useCheckBoxes;
   }
 
   writeValue(obj: any): void {
