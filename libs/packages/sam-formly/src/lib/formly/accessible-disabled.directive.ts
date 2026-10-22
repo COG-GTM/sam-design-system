@@ -21,6 +21,20 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 export const SDS_ACCESSIBLE_DISABLED = new InjectionToken<boolean>('SDS_ACCESSIBLE_DISABLED');
 
 const CHECKABLE_INPUT_TYPES = ['checkbox', 'radio'];
+/** Input types that ignore `readonly`; edits are blocked through events instead. */
+const NON_READONLY_INPUT_TYPES = ['range', 'color', 'file'];
+const VALUE_CHANGING_KEYS = [
+  'Enter',
+  ' ',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown',
+];
 
 /**
  * Applied to the native control of a formly field. When the field is disabled and the
@@ -38,6 +52,7 @@ export class SdsAccessibleDisabledDirective implements AfterViewChecked {
 
   private applied = false;
   private ownsTabindex = false;
+  private previousTabindex: string | null = null;
   private ownsReadonly = false;
 
   constructor(
@@ -58,6 +73,10 @@ export class SdsAccessibleDisabledDirective implements AfterViewChecked {
     return CHECKABLE_INPUT_TYPES.includes(this.el.nativeElement.type);
   }
 
+  get supportsReadonly(): boolean {
+    return !this.isCheckable && !NON_READONLY_INPUT_TYPES.includes(this.el.nativeElement.type);
+  }
+
   /**
    * Runs after the reactive forms directive and `formlyAttributes` have had their turn,
    * so a native `disabled` they set can be swapped for the accessible attributes.
@@ -71,11 +90,12 @@ export class SdsAccessibleDisabledDirective implements AfterViewChecked {
       if (!this.applied) {
         this.applied = true;
         this.renderer.setAttribute(el, 'aria-disabled', 'true');
-        this.ownsTabindex = !el.hasAttribute('tabindex');
+        this.previousTabindex = el.getAttribute('tabindex');
+        this.ownsTabindex = this.previousTabindex === null || Number(this.previousTabindex) < 0;
         if (this.ownsTabindex) {
           this.renderer.setAttribute(el, 'tabindex', '0');
         }
-        this.ownsReadonly = !this.isCheckable && !el.readOnly;
+        this.ownsReadonly = this.supportsReadonly && !el.readOnly;
       }
       if (this.ownsReadonly && !el.readOnly) {
         this.renderer.setAttribute(el, 'readonly', 'readonly');
@@ -84,7 +104,11 @@ export class SdsAccessibleDisabledDirective implements AfterViewChecked {
       this.applied = false;
       this.renderer.removeAttribute(el, 'aria-disabled');
       if (this.ownsTabindex) {
-        this.renderer.removeAttribute(el, 'tabindex');
+        if (this.previousTabindex === null) {
+          this.renderer.removeAttribute(el, 'tabindex');
+        } else {
+          this.renderer.setAttribute(el, 'tabindex', this.previousTabindex);
+        }
       }
       if (this.ownsReadonly) {
         this.renderer.removeAttribute(el, 'readonly');
@@ -106,15 +130,17 @@ export class SdsAccessibleDisabledDirective implements AfterViewChecked {
   }
 
   @HostListener('click', ['$event'])
-  onClick(event: Event) {
-    if (this.applied && this.isCheckable) {
+  @HostListener('mousedown', ['$event'])
+  @HostListener('touchstart', ['$event'])
+  onPointerAttempt(event: Event) {
+    if (this.applied && !this.supportsReadonly) {
       event.preventDefault();
     }
   }
 
   @HostListener('keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
-    if (this.applied && (event.key === 'Enter' || event.key === ' ')) {
+    if (this.applied && VALUE_CHANGING_KEYS.includes(event.key)) {
       event.preventDefault();
     }
   }

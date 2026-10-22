@@ -196,6 +196,39 @@ describe('SdsAccessibleDisabledDirective', () => {
       expect(input.readOnly).toBe(true);
     });
 
+    it('replaces a negative tabindex while active and restores it afterwards', () => {
+      fixture = createForm([inputField({ accessibleDisabled: true, tabindex: -1 })]);
+      const input = query<HTMLInputElement>(fixture, 'input');
+      expect(input.getAttribute('tabindex')).toBe('0');
+
+      fixture.componentInstance.fields[0].props.disabled = false;
+      fixture.detectChanges();
+      expect(input.getAttribute('tabindex')).toBe('-1');
+      expect(input.getAttribute('aria-disabled')).toBeNull();
+    });
+
+    it('blocks arrow keys and pointer changes on a range input, which ignores readonly', () => {
+      fixture = createForm([inputField({ accessibleDisabled: true, inputType: 'range' })]);
+      const input = query<HTMLInputElement>(fixture, 'input');
+      expect(input.type).toBe('range');
+      expect(input.readOnly).toBe(false);
+      expect(input.getAttribute('aria-disabled')).toBe('true');
+      expect(input.getAttribute('tabindex')).toBe('0');
+
+      for (const key of ['ArrowRight', 'ArrowUp', 'Home', 'End', 'PageUp', 'PageDown']) {
+        const keydown = new KeyboardEvent('keydown', { key, cancelable: true });
+        input.dispatchEvent(keydown);
+        expect(keydown.defaultPrevented, key).toBe(true);
+      }
+      const mousedown = new MouseEvent('mousedown', { cancelable: true });
+      input.dispatchEvent(mousedown);
+      expect(mousedown.defaultPrevented).toBe(true);
+
+      const tab = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true });
+      input.dispatchEvent(tab);
+      expect(tab.defaultPrevented).toBe(false);
+    });
+
     it('falls back to the native disabled attribute when the pattern is switched off', () => {
       fixture.componentInstance.fields[0].props.accessibleDisabled = false;
       fixture.detectChanges();
