@@ -159,7 +159,8 @@ export const Configurable: StoryObj = (args) => {
   const config = resultListConfigFunction(results, showMessage, type, title, message, classes, isDefaultModel);
 
   return {
-    template: '<sds-result-list-configurable [configuration]=config [divider]=divider ></sds-result-list-configurable>',
+    template:
+      '<sds-result-list-configurable [configuration]="config" [divider]="divider" [isDefaultModel]="isDefaultModel"></sds-result-list-configurable>',
     props: {
       config,
       ...args,
