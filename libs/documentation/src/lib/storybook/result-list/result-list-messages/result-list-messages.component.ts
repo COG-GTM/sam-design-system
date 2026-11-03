@@ -139,8 +139,8 @@ export class ResultListMessagesComponent {
       messages: [
         {
           type: 'initial',
-          title: 'Search Criteria',
-          message: `Choose your filter to run report`,
+          title: 'Start your search',
+          message: `Choose your filters, then run the search. Results show here.`,
           classes: 'usa-custom',
         },
       ],
